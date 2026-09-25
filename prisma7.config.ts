@@ -4,7 +4,6 @@ import "dotenv/config";
 import { config } from "./src/lib/config";
 import { defineConfig } from "prisma/config";
 
-console.log("DB URL Studio will use:", config.DATABASE_URL);
 export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
