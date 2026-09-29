@@ -1,5 +1,6 @@
-import { prisma } from '../src/lib/db';
+import prisma from '../src/lib/db';
 import { UserUncheckedCreateInput } from '../src/generated/prisma/models';
+import { hashPassword } from '../src/lib/password'
 
 async function seed() {
   const users: UserUncheckedCreateInput[] = [
@@ -25,6 +26,7 @@ async function seed() {
 
   await prisma.user.deleteMany()
   for (const user of users ) {
+    user.passwordHash = await hashPassword(user.passwordHash)
     await prisma.user.create({data: user})
   }
 
