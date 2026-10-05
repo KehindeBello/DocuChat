@@ -16,6 +16,13 @@ enum Role {
   USER
   ADMIN
 }
+
+enum DocumentStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+}
 model User {
   id              String           @id @default(cuid())
   name            String       
@@ -27,6 +34,7 @@ model User {
   updatedAt       DateTime         @updatedAt
   deletedAt       DateTime? 
   refreshTokens    RefreshToken[]
+  documents       Document[]
 
   @@index([email])
 }
@@ -37,4 +45,21 @@ model RefreshToken {
   expiresAt        DateTime
   userId           String          
   user             User            @relation(fields:[userId], references:[id], onDelete: Cascade)
+}
+
+model Document {
+  id               String          @id @default(cuid())
+  title            String
+  content          String
+  status           DocumentStatus
+  url              String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  userId           String
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([userId, status])
 }
