@@ -33,7 +33,7 @@ function verifyToken(token: string, secret: string, expectedType: JwtPayload['ty
   try {
     payload = jwt.verify(token, secret) as JwtPayload;
   } catch {
-    logger.error(`Unauthor`)
+    logger.error(`Unauthorized`)
     throw new Error('Unauthorized');
   }
 
