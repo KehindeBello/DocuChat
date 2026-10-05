@@ -4,20 +4,10 @@ import prisma from "../lib/db";
 import { logger } from "../lib/logger";
 import { hashPassword, verifyPassword } from "../lib/password";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../lib/jwt";
+import { RegisterInput, LoginInput,  RefreshTokenInput } from "../validators/auth.validator";
 import crypto from 'crypto'
 
-interface RegisterUser {
-  email: string,
-  name: string
-  password: string
-}
-
-interface LoginUser {
-  email: string,
-  password: string
-}
-
-export async function register(data: RegisterUser) {
+export async function register(data: RegisterInput) {
   const { name, email, password } = data;
   const existing = await prisma.user.findUnique({
     where: { email: email.toLowerCase().trim() }
@@ -37,7 +27,7 @@ export async function register(data: RegisterUser) {
   return { id: newUser.id, email: newUser.email, role: newUser.role }
 }
 
-export async function loginUser(data: LoginUser) {
+export async function loginUser(data: LoginInput) {
   const { email, password } = data;
 
   const user = await prisma.user.findUnique({
@@ -77,7 +67,8 @@ export async function loginUser(data: LoginUser) {
   }
 }
 
-export async function refreshToken(refreshToken: string) {
+export async function refreshToken(data: RefreshTokenInput) {
+  const { refreshToken } = data
   //take in token - verify the token
   const payload = await verifyRefreshToken(refreshToken);
   //hash and check if exists in db
