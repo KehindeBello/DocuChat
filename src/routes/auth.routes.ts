@@ -1,5 +1,7 @@
 import { Router } from "express"
 import * as authController from "../controllers/auth.controller"
+import { validate } from "../middlewares/validate";
+import { registerSchema } from "../validators/auth.validator";
 
 const router = Router()
 
@@ -50,17 +52,24 @@ const router = Router()
  *                 role:
  *                   type: string
  *                   enum: [USER, ADMIN]
- *       '400':
- *         description: Registration failed, including when the email is already registered
+ *       '409':
+ *         description: A user with this email is already registered
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
  *                 error:
- *                   type: string
+ *                   type: object
+ *                   properties:
+ *                     code:
+ *                       type: string
+ *                       example: CONFLICT
+ *                     message:
+ *                       type: string
+ *                       example: Email already exists
  */
-router.post('/register', (req, res) => authController.registerUser(req, res));
+router.post('/register', validate(registerSchema), (req, res) => authController.registerUser(req, res));
 
 /**
  * @swagger

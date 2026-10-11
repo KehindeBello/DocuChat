@@ -6,6 +6,7 @@ import { hashPassword, verifyPassword } from "../lib/password";
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from "../lib/jwt";
 import { RegisterInput, LoginInput,  RefreshTokenInput } from "../validators/auth.validator";
 import crypto from 'crypto'
+import { ConflictError, NotFoundError, UnauthorizedError } from "../lib/errors";
 
 export async function register(data: RegisterInput) {
   const { name, email, password } = data;
@@ -15,12 +16,12 @@ export async function register(data: RegisterInput) {
 
   if (existing) {
     logger.error(`User ${email} already exists`)
-    throw new Error(`Email already registered`)
+    throw new ConflictError('Email already exists')
   }
 
   const passwordHash = await hashPassword(password)
 
-  const newUser = await prisma.user.create({ data: { email: email, name: name, passwordHash: passwordHash } })
+  const newUser = await prisma.user.create({ data: { email: email.toLowerCase().trim(), name: name, passwordHash: passwordHash } })
 
   appEvents.emit(AUTH_EVENTS.USER_REGISTERED, { name: newUser.name} )
 
@@ -30,24 +31,25 @@ export async function register(data: RegisterInput) {
 export async function loginUser(data: LoginInput) {
   const { email, password } = data;
 
+  logger.info(`Email: ${email}`);
   const user = await prisma.user.findUnique({
     where: { email: email.toLowerCase().trim() }
   })
 
   if (!user) {
-    throw new Error(`Invalid Credentails`);
+    throw new UnauthorizedError(`Invalid Credentials`);
   } 
 
   if (!user.isActive) {
     appEvents.emit(AUTH_EVENTS.USER_LOGIN_FAILED, { reason: `User ${user.email} is not active` })
-    throw new Error('Invalid Credentials'); //TODO: Check this later 
+    throw new UnauthorizedError('Invalid Credentials'); //TODO: Check this later 
   }
 
   const isPasswordValid = await verifyPassword(password, user.passwordHash)
   
   if(!isPasswordValid) {
     appEvents.emit(AUTH_EVENTS.USER_LOGIN_FAILED, { reason: 'Wrong Password'})
-    throw new Error('Invalid Credentials')
+    throw new UnauthorizedError('Invalid Credentials')
   }
 
   const accessToken = await generateAccessToken(user.id, user.role)
@@ -76,12 +78,12 @@ export async function refreshToken(data: RefreshTokenInput) {
   const existingToken = await prisma.refreshToken.findUnique({ where: { token: hashRefreshToken } })
   
   if (!existingToken || existingToken.expiresAt < new Date()) {
-    throw new Error(`Token expired or revoked`)
+    throw new UnauthorizedError();
   }
 
   // Get user
   const user = await prisma.user.findUnique({ where: { id: payload.sub } })
-  if (!user) throw new Error(`User not found`)
+  if (!user) throw new NotFoundError(`User not found`)
 
   // delete the old token
   await prisma.refreshToken.delete({ where: { token: hashRefreshToken } })

@@ -6,6 +6,7 @@ import './events';
 import router from './routes/index'
 import swaggerUi from 'swagger-ui-express'; 
 import { swaggerSpec } from './lib/swagger'; 
+import { errorHandler } from './middlewares/errorHandler';
 
 
 export const app = express();
@@ -31,3 +32,12 @@ app.get('/health', (req, res) => {
     environment: config.NODE_ENV
   })
 })
+
+app.use((req, res) => { 
+  res.status(404).json({
+    success: false, 
+    error: { code: 'NOT_FOUND', message: `Route ${req.path} not found` }, 
+  }); 
+}); 
+
+app.use(errorHandler);
