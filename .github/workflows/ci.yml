@@ -2,9 +2,9 @@ name: DocuChat CI
 
 on:
   push:
-    branches: [dev, main]
+    branches: [dev, master]
   pull_request:
-    branches: [main]
+    branches: [master]
 
 jobs:
   test:
