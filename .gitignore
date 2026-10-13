@@ -3,6 +3,8 @@ node_modules/
 dist/
 /DocuChat
 /src/generated/prisma
+.env.test
 .agents/
 .claude/
 .windsurf/
+skills-lock.json
